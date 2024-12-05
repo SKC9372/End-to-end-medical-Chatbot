@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedicalBot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f9;
+        }
+
+        /* Header */
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            max-width: 800px;
+            margin: 20px auto;
+            height: 80vh;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin: 10px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.user .content {
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 15px 15px 0 15px;
+        }
+
+        .message.bot .content {
+            background-color: #f1f0f0;
+            color: #333;
+            border-radius: 15px 15px 15px 0;
+        }
+
+        .message .content {
+            max-width: 60%;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        /* Chat Input Area */
+        .chat-input {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input textarea {
+            flex-grow: 1;
+            resize: none;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 1rem;
+            outline: none;
+            margin-right: 10px;
+        }
+
+        .chat-input button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background-color: #45a049;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f4f4f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        MedicalChat Bot
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be dynamically appended here -->
+        </div>
+
+        <div class="chat-input">
+            <textarea id="userInput" rows="1" placeholder="Type your message..."></textarea>
+            <button id="sendMessage">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Function to append a message to the chat window
+        function appendMessage(content, sender) {
+            const chatMessages = document.getElementById("chatMessages");
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", sender);
+
+            const contentDiv = document.createElement("div");
+            contentDiv.classList.add("content");
+            contentDiv.innerText = content;
+
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Handle sending messages
+        document.getElementById("sendMessage").addEventListener("click", () => {
+            const userInput = document.getElementById("userInput");
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Append user's message
+            appendMessage(message, "user");
+            userInput.value = "";
+
+            // Send to server and handle response
+            fetch("/get", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `msg=${message}`,
+            })
+                .then((response) => response.text())
+                .then((data) => {
+                    appendMessage(data, "bot");
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    appendMessage("Something went wrong. Please try again.", "bot");
+                });
+        });
+
+        // Send message on pressing Enter
+        document.getElementById("userInput").addEventListener("keypress", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                document.getElementById("sendMessage").click();
+            }
+        });
+    </script>
+
+</body>
+</html>
